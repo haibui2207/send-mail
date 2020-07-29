@@ -8,8 +8,10 @@ const mailService = require('./mail-services');
 // Start script
 (async () => {
   logger('\r\n\r\n', true);
-  logger(`==================${new Date(Date.now()).toString()}==================`);
-  logger(`[MAIL_SERVICE]: ${CONFIGS.MAIL_SERVICE}`)
+  logger(
+    `==================${new Date(Date.now()).toString()}==================`,
+  );
+  logger(`[MAIL_SERVICE]: ${CONFIGS.MAIL_SERVICE}`);
   console.debug('[DEBUG]: Staring');
   console.debug(`[DEBUG]: Using mail service: ${CONFIGS.MAIL_SERVICE}`);
   console.debug('[DEBUG]: Parsing user from csv');
@@ -25,7 +27,9 @@ const mailService = require('./mail-services');
 
   listUsers.forEach((user, index) => {
     setTimeout(async () => {
-      console.debug(`[DEBUG]: Starting send email [${index}] to: ${user.emailAddress}`);
+      console.debug(
+        `[DEBUG]: Starting send email [${index}] to: ${user.emailAddress}`,
+      );
 
       try {
         if (!validateEmail(user.emailAddress)) {
@@ -61,44 +65,38 @@ const mailService = require('./mail-services');
           callbackUrl: `${CONFIGS.APP_DOMAIN}/reset-password`,
         };
 
-        ejs.renderFile(
-          './reset-password-template.ejs',
-          templateData,
-          async (err, html) => {
+        ejs.renderFile('./template.ejs', templateData, async (err, html) => {
+          if (err) {
+            console.error(err);
+            return;
+          }
+
+          const mailOptions = {
+            from: CONFIGS.MAIL_SENDER,
+            to: user.emailAddress,
+            subject: CONFIGS.MAIL_SUBJECT,
+            html,
+          };
+
+          await mailService.send(mailOptions, (err) => {
             if (err) {
-              console.error(err);
-              return;
+              logger(
+                `[ERROR]: Cannot send to email: ${user.emailAddress} with error: ${err}`,
+              );
+              console.log(
+                `[ERROR]: Cannot send to email: ${user.emailAddress}`,
+              );
+            } else {
+              console.debug(`[DEBUG]: Send email successfully`);
             }
 
-            const mailOptions = {
-              from: CONFIGS.MAIL_SENDER,
-              to: user.emailAddress,
-              subject: CONFIGS.MAIL_SUBJECT,
-              html,
-            };
-
-            await mailService.send(mailOptions, (err) => {
-              if (err) {
-                logger(
-                  `[ERROR]: Cannot send to email: ${user.emailAddress} with error: ${err}`,
-                );
-                console.log(
-                  `[ERROR]: Cannot send to email: ${user.emailAddress}`,
-                );
-              } else {
-                console.debug(
-                  `[DEBUG]: Send email successfully`,
-                );
-              }
-
-              if (index === listUsers.length - 1) {
-                client.close();
-                console.debug('[DEBUG]: Closed connection');
-                process.exit(1);
-              }
-            });
-          },
-        );
+            if (index === listUsers.length - 1) {
+              client.close();
+              console.debug('[DEBUG]: Closed connection');
+              process.exit(1);
+            }
+          });
+        });
       } catch (e) {
         console.log(`[ERROR]: Something wrong: ${e}`);
       }
