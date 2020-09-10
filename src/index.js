@@ -15,7 +15,7 @@ const mailService = require('./mail-services');
   console.debug('[DEBUG]: Staring');
   console.debug(`[DEBUG]: Using mail service: ${CONFIGS.MAIL_SERVICE}`);
   console.debug('[DEBUG]: Parsing user from csv');
-  const listUsers = readDataFromCSV(CONFIGS.CSV_PATH);
+  const listUsers = await readDataFromCSV(CONFIGS.CSV_PATH);
 
   const client = await MongoClient.connect(CONFIGS.MONGO_URL, {
     useNewUrlParser: true,

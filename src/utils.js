@@ -12,20 +12,22 @@ const logger = (message, rawMessage = false) => {
   fs.appendFileSync('./log.txt', formatedMessage);
 };
 
-const readDataFromCSV = (csvPath) => {
-  const result = [];
+const readDataFromCSV = async (csvPath) =>
+  new Promise((rs, rj) => {
+    {
+      const result = [];
 
-  fs.createReadStream(csvPath)
-    .pipe(csv())
-    .on('data', (data) => {
-      result.push({ emailAddress: data.Email, firstName: data.FirstName });
-    })
-    .on('end', () => {
-      console.debug(`[DEBUG]: Collected ${result.length} records`);
-    });
-
-  return result;
-};
+      fs.createReadStream(csvPath)
+        .pipe(csv())
+        .on('data', (data) => {
+          result.push({ emailAddress: data.Email, firstName: data.FirstName });
+        })
+        .on('end', () => {
+          rs(result);
+        })
+        .on('error', rj);
+    }
+  });
 
 module.exports = {
   validateEmail,
